@@ -11,6 +11,7 @@ from shapely.geometry.polygon import Polygon
 from PIL import Image
 from operator import attrgetter
 
+
 pygame.init() #Initialize pygame
 #Some variables initializations
 img = 0 #This one is used when recording frames
