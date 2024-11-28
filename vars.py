@@ -1,4 +1,5 @@
 """Modulo de variables del entorno"""
+
 import pygame
 
 pygame.init() #Initialize pygame
@@ -11,7 +12,7 @@ black = (0,0,0)
 gray = pygame.Color('gray12')
 Color_line = (255,0,0)
 
-### VALORES DE INICIALIZACION ###
+### Valores de inicializacion ###
 generation = 1
 mutationRate = 90
 FPS = 30

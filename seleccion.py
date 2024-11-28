@@ -1,4 +1,5 @@
 """Modulo de operadores de seleccion de individuos"""
+
 import pygame
 from vars import *
 from shapely.geometry import Point
@@ -37,6 +38,7 @@ def seleccion_manual_individuo():
                         nncar.acceleration = 0
                     nncar.update()
             break
+
 
 def eliminacion_manual_individuo():
     """Eliminar manualmente un individuo"""

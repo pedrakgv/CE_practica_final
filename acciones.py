@@ -1,7 +1,7 @@
-"""Acciones de los objetos de la clase Coche"""
+"""Modulo de acciones de los objetos de la clase Coche"""
+
 import math
 import numpy as np
-
 
 def calculateDistance(x1,y1,x2,y2): #Used to calculate distance between points
     dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
@@ -25,9 +25,5 @@ def move(point, angle, unit): #Translate a point in a given direction
 
   return x, y
 
-
-  
-
-  
 def sigmoid(z): #Sigmoid function, used as the neurons activation function
     return 1.0/(1.0+np.exp(-z))

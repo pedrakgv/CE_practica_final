@@ -1,4 +1,5 @@
 """Modulo de operadores de cruce"""
+
 def uniformCrossOverWeights(parent1, parent2, child1, child2): #Given two parent car objects, it modifies the children car objects weights
     sizenn = len(child1.sizes) #3 si car1=Car([2, 4, 3])
     
@@ -59,6 +60,7 @@ def uniformCrossOverWeights(parent1, parent2, child1, child2): #Given two parent
                 child2.weights[i][j][k] = genome2[count]
                 count += 1              
     return 
+
 
 def uniformCrossOverBiases(parent1, parent2, child1, child2): #Given two parent car objects, it modifies the children car objects biases
     sizenn = len(parent1.sizes)

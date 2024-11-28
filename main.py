@@ -1,33 +1,16 @@
+"""Modulo principal"""
+
 import pygame
-import random
-import os
 import math
 import numpy as np
-import time
-import sys
-from datetime import datetime
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-from operator import attrgetter
 
 from vars import *
 # from coche import Coche
-from grid import Cell, Maze, generateRandomMap
+from grid import generateRandomMap
 from cruces import uniformCrossOverBiases, uniformCrossOverWeights
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene
 from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
 from pantalla import displayTexts
-
- 
-
-# gameDisplay = pygame.display.set_mode(size) #creates screen
-# clock = pygame.time.Clock()
-
-import numpy as np
-import math
-import pygame
-
-import vars
 from acciones import move, rotation, calculateDistance, sigmoid
 
 class Coche:

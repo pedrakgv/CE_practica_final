@@ -1,4 +1,5 @@
 """Modulo para representar los textos en la interfaz grafica"""
+
 from vars import *
 def displayTexts():  
     global gameDisplay
@@ -51,3 +52,4 @@ def displayTexts():
     #gameDisplay.blit(infotext8, infotext8Rect) 
     gameDisplay.blit(infotext9, infotext9Rect) 
     return
+    

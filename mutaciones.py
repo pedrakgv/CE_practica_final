@@ -1,4 +1,5 @@
 """Modulo de operadores de mutacion"""
+
 import random
 
 def mutateOneWeightGene(parent1, child1):
@@ -32,6 +33,7 @@ def mutateOneWeightGene(parent1, child1):
                 child1.weights[i][j][k] = genomeWeights[count]
                 count += 1
     return
+
 
 def mutateOneBiasesGene(parent1, child1):
     sizenn = len(child1.sizes)
