@@ -15,92 +15,13 @@ from vars import *
 from grid import Cell, Maze, generateRandomMap
 from cruces import uniformCrossOverBiases, uniformCrossOverWeights
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene
+from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
+from pantalla import displayTexts
 
-pygame.init() #Initialize pygame
-#Some variables initializations
-
-#These is just the text being displayed on pygame window
-infoX = 1265
-infoY = 600 
-font = pygame.font.Font('freesansbold.ttf', 18)
-text1 = font.render('0..9 - Change Mutation', True, white)
-text2 = font.render('LMB - Select/Unselect', True, white)
-text3 = font.render('RMB - Delete', True, white)
-text4 = font.render('L - Show/Hide Lines', True, white)
-text5 = font.render('R - Reset', True, white)
-text6 = font.render('B - Breed', True, white)
-text7 = font.render('C - Clean', True, white)
-text8 = font.render('N - Next Track', True, white)
-text9 = font.render('A - Toggle Player', True, white)
-text10 = font.render('D - Toggle Info', True, white)
-text11 = font.render('M - Breed and Next Track', True, white)
-text1Rect = text1.get_rect().move(infoX,infoY)
-text2Rect = text2.get_rect().move(infoX,infoY+text1Rect.height)
-text3Rect = text3.get_rect().move(infoX,infoY+2*text1Rect.height)
-text4Rect = text4.get_rect().move(infoX,infoY+3*text1Rect.height)
-text5Rect = text5.get_rect().move(infoX,infoY+4*text1Rect.height)
-text6Rect = text6.get_rect().move(infoX,infoY+5*text1Rect.height)
-text7Rect = text7.get_rect().move(infoX,infoY+6*text1Rect.height)
-text8Rect = text8.get_rect().move(infoX,infoY+7*text1Rect.height)
-text9Rect = text9.get_rect().move(infoX,infoY+8*text1Rect.height)
-text10Rect = text10.get_rect().move(infoX,infoY+9*text1Rect.height)
-text11Rect = text11.get_rect().move(infoX,infoY+10*text1Rect.height)
-
-
-def displayTexts():  
-    infotextX = 100
-    infotextY = 700
-    infotext1 = font.render('Gen ' + str(generation), True, white) 
-    infotext2 = font.render('Cars: ' + str(num_of_nnCars), True, white)
-    infotext3 = font.render('Alive: ' + str(alive), True, white)
-    infotext4 = font.render('Selected: ' + str(selected), True, white)
-    if lines == True:
-        infotext5 = font.render('Lines ON', True, white)
-    else:
-        infotext5 = font.render('Lines OFF', True, white)
-    if player == True:
-        infotext6 = font.render('Player ON', True, white)
-    else:
-        infotext6 = font.render('Player OFF', True, white)
-    #infotext7 = font.render('Mutation: '+ str(2*mutationRate), True, white)
-    #infotext8 = font.render('Frames: ' + str(frames), True, white)
-    infotext9 = font.render('FPS: 30', True, white)
-    infotext1Rect = infotext1.get_rect().move(infotextX,infotextY)
-    infotext2Rect = infotext2.get_rect().move(infotextX,infotextY+infotext1Rect.height)
-    infotext3Rect = infotext3.get_rect().move(infotextX,infotextY+2*infotext1Rect.height)
-    infotext4Rect = infotext4.get_rect().move(infotextX,infotextY+3*infotext1Rect.height)
-    infotext5Rect = infotext5.get_rect().move(infotextX,infotextY+4*infotext1Rect.height)
-    infotext6Rect = infotext6.get_rect().move(infotextX,infotextY+5*infotext1Rect.height)
-    #infotext7Rect = infotext7.get_rect().move(infotextX,infotextY+6*infotext1Rect.height)
-    #infotext8Rect = infotext8.get_rect().move(infotextX,infotextY+7*infotext1Rect.height)
-    infotext9Rect = infotext9.get_rect().move(infotextX,infotextY+6*infotext1Rect.height)
-
-    gameDisplay.blit(text1, text1Rect)  
-    gameDisplay.blit(text2, text2Rect)  
-    gameDisplay.blit(text3, text3Rect) 
-    gameDisplay.blit(text4, text4Rect) 
-    gameDisplay.blit(text5, text5Rect) 
-    gameDisplay.blit(text6, text6Rect)
-    gameDisplay.blit(text7, text7Rect)   
-    gameDisplay.blit(text8, text8Rect)  
-    gameDisplay.blit(text9, text9Rect)     
-    gameDisplay.blit(text10, text10Rect) 
-    gameDisplay.blit(text11, text11Rect)  
-    
-    gameDisplay.blit(infotext1, infotext1Rect)  
-    gameDisplay.blit(infotext2, infotext2Rect)  
-    gameDisplay.blit(infotext3, infotext3Rect) 
-    gameDisplay.blit(infotext4, infotext4Rect) 
-    gameDisplay.blit(infotext5, infotext5Rect) 
-    gameDisplay.blit(infotext6, infotext6Rect)
-    #gameDisplay.blit(infotext7, infotext7Rect) 
-    #gameDisplay.blit(infotext8, infotext8Rect) 
-    gameDisplay.blit(infotext9, infotext9Rect) 
-    return
  
 
-gameDisplay = pygame.display.set_mode(size) #creates screen
-clock = pygame.time.Clock()
+# gameDisplay = pygame.display.set_mode(size) #creates screen
+# clock = pygame.time.Clock()
 
 import numpy as np
 import math
@@ -361,7 +282,7 @@ while True:
 
 
             # Selección Manual
-            if event.key == ord ( "b" ):
+            if event.key == ord ( "b" ):       # B: Nueva generacion
                 if (len(selectedCars) == 2):
                     for nncar in nnCars:
                         nncar.score = 0
@@ -404,7 +325,7 @@ while True:
                     selectedCars.clear()
                     
                 
-            if event.key == ord ( "m" ):
+            if event.key == ord ( "m" ):        # M: Nueva generacion y nuevo circuito
                 if (len(selectedCars) == 2):
                     for nncar in nnCars:
                         nncar.score = 0
@@ -481,49 +402,11 @@ while True:
             #(leftclick, middleclick, rightclick)
             #Each one is a boolean integer representing button up/down.
             mouses = pygame.mouse.get_pressed()
-            if mouses[0]:
-                pos = pygame.mouse.get_pos()
-                point = Point(pos[0], pos[1])
-                #Revisar la lista de autos y ver cual estaba ahi
-                for nncar in nnCars:  
-                    polygon = Polygon([nncar.a, nncar.b, nncar.c, nncar.d])
-                    if (polygon.contains(point)):
-                        if nncar in selectedCars:
-                            selectedCars.remove(nncar)
-                            selected -= 1
-                            if nncar.car_image == white_big_car:
-                                nncar.car_image = white_small_car 
-                            if nncar.car_image == green_big_car:
-                                nncar.car_image = green_small_car
-                            if nncar.collided:
-                                nncar.velocity = 0
-                                nncar.acceleration = 0
-                            nncar.update()
-                        else:
-                            if len(selectedCars) < 2:
-                                selectedCars.append(nncar)
-                                selected +=1
-                                if nncar.car_image == white_small_car:
-                                    nncar.car_image = white_big_car  
-                                if nncar.car_image == green_small_car:
-                                    nncar.car_image = green_big_car  
-                                if nncar.collided:
-                                    nncar.velocity = 0
-                                    nncar.acceleration = 0
-                                nncar.update()
-                        break
-            
+            if mouses[0]: # Click izquierdo
+                seleccion_manual_individuo()
     
-            if mouses[2]:
-                pos = pygame.mouse.get_pos()
-                point = Point(pos[0], pos[1])
-                for nncar in nnCars:  
-                    polygon = Polygon([nncar.a, nncar.b, nncar.c, nncar.d])
-                    if (polygon.contains(point)):
-                        if nncar not in selectedCars:
-                            nnCars.remove(nncar)
-                            alive -= 1
-                        break
+            if mouses[2]:       # Click derecho
+                eliminacion_manual_individuo()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:

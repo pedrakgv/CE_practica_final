@@ -1,3 +1,4 @@
+"""Modulo de generacion del mapa/grid"""
 import pygame
 import random
 from PIL import Image

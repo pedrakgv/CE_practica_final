@@ -1,3 +1,4 @@
+"""Acciones de los objetos de la clase Coche"""
 import math
 import numpy as np
 

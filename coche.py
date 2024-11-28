@@ -1,3 +1,4 @@
+"""Modulo de la clase Coche"""
 # import numpy as np
 # import math
 # import pygame

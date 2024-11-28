@@ -1,4 +1,4 @@
-
+"""Modulo de operadores de cruce"""
 def uniformCrossOverWeights(parent1, parent2, child1, child2): #Given two parent car objects, it modifies the children car objects weights
     sizenn = len(child1.sizes) #3 si car1=Car([2, 4, 3])
     
