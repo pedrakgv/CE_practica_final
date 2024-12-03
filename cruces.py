@@ -1,4 +1,21 @@
+import random
+
 """Modulo de operadores de cruce"""
+
+def uniformCrossOver(parent1, parent2):
+    child1 = []
+    child2 = []
+
+    mask = [random.randint(0, 1) for _ in range(len(parent1))]
+    for i in range(len(parent1)):
+        if mask[i] == 0:
+            child1.append(parent1[i])
+            child2.append(parent2[i])
+        else:
+            child1.append(parent2[i])
+            child2.append(parent1[i])
+    
+    return child1, child2
 
 def uniformCrossOverWeights(parent1, parent2, child1, child2): #Given two parent car objects, it modifies the children car objects weights
     sizenn = len(child1.sizes) #3 si car1=Car([2, 4, 3])

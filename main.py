@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 from vars import *
-# from coche import Coche
+from coche import Coche
 from grid import generateRandomMap
 from cruces import uniformCrossOverBiases, uniformCrossOverWeights
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene
@@ -13,13 +13,21 @@ from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
 from pantalla import displayTexts
 from acciones import move, rotation, calculateDistance, sigmoid
 
+
 class Coche:
-  def __init__(self, sizes):
+  def __init__(self, genome = None):
+    sizes = [inputLayer, hiddenLayer, outputLayer]
     self.score = 0
     self.num_layers = len(sizes) #Number of nn layers
     self.sizes = sizes #List with number of neurons per layer
-    self.biases = [np.random.randn(y, 1) for y in sizes[1:]] #Biases
-    self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])] #Weights 
+    # self.biases = [np.random.randn(y, 1) for y in sizes[1:]] #Biases
+    # self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])] #Weights 
+    if genome == None:
+        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
+    else:
+        self.weights = genome[: (size[1] + size[2])]
+        self.biases = genome[(size[1] + size[2]):]
     #c1, c2, c3, c4, c5 are five 2D points where the car could collided, updated in every frame
     self.c1 = 0,0
     self.c2 = 0,0
@@ -127,7 +135,9 @@ class Coche:
     self.d4 = int(calculateDistance(self.center[0], self.center[1], self.c4[0], self.c4[1]))
     self.d5 = int(calculateDistance(self.center[0], self.center[1], self.c5[0], self.c5[1]))
     
-    
+  def update_car(self, genome):
+    self.weights = genome[: (size[1] + size[2])]
+    self.biases = genome[(size[1] + size[2]):]
 
   def draw(self,display):
     rotated_image = pygame.transform.rotate(self.car_image, -self.angle-180)
@@ -180,11 +190,13 @@ class Coche:
     return
   
 
-car = Coche([inputLayer, hiddenLayer, outputLayer])
-auxcar = Coche([inputLayer, hiddenLayer, outputLayer])
+car = Coche()
+auxcar = Coche()
 
 for i in range(num_of_nnCars):
-	nnCars.append(Coche([inputLayer, hiddenLayer, outputLayer]))
+    
+    #genome_random = [np.random.randn(y, 1) for y in sizes[1:]]
+	nnCars.append(Coche())
    
 def redrawGameWindow(): #Called on very frame   
 
@@ -226,7 +238,9 @@ def redrawGameWindow(): #Called on very frame
     #Take a screenshot of every frame
     #pygame.image.save(gameDisplay, "pygameVideo/screenshot" + str(img) + ".jpeg")
     #img += 1
-    
+
+
+
 while True:
     #now1 = time.time()  
   
@@ -276,7 +290,7 @@ while True:
                     nnCars.clear() 
                     
                     for i in range(num_of_nnCars):
-                        nnCars.append(Coche([inputLayer, hiddenLayer, outputLayer]))
+                        nnCars.append(Coche())
                         
                     for i in range(0,num_of_nnCars-2,2):
                         uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
@@ -319,7 +333,7 @@ while True:
                     nnCars.clear() 
                     
                     for i in range(num_of_nnCars):
-                        nnCars.append(Coche([inputLayer, hiddenLayer, outputLayer]))
+                        nnCars.append(Coche())
                         
                     for i in range(0,num_of_nnCars-2,2):
                         uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
@@ -368,7 +382,7 @@ while True:
                 nnCars.clear() 
                 selectedCars.clear()
                 for i in range(num_of_nnCars):
-                    nnCars.append(Coche([inputLayer, hiddenLayer, outputLayer]))
+                    nnCars.append(Coche())
                 for nncar in nnCars:
                     if number_track == 1:
                         nncar.x = 120
