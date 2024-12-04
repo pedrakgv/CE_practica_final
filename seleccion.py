@@ -21,6 +21,8 @@ def seleccion_manual_individuo():
                     nncar.car_image = white_small_car 
                 if nncar.car_image == green_big_car:
                     nncar.car_image = green_small_car
+                if nncar.car_image == blue_big_car:
+                    nncar.car_image = blue_small_car
                 if nncar.collided:
                     nncar.velocity = 0
                     nncar.acceleration = 0
@@ -32,7 +34,9 @@ def seleccion_manual_individuo():
                     if nncar.car_image == white_small_car:
                         nncar.car_image = white_big_car  
                     if nncar.car_image == green_small_car:
-                        nncar.car_image = green_big_car  
+                        nncar.car_image = green_big_car
+                    if nncar.car_image == blue_small_car:
+                        nncar.car_image = blue_big_car
                     if nncar.collided:
                         nncar.velocity = 0
                         nncar.acceleration = 0

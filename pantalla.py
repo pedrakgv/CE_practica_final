@@ -41,6 +41,7 @@ def displayTexts():
     gameDisplay.blit(text9, text9Rect)     
     gameDisplay.blit(text10, text10Rect) 
     gameDisplay.blit(text11, text11Rect)  
+    gameDisplay.blit(text12, text12Rect)
     
     gameDisplay.blit(infotext1, infotext1Rect)  
     gameDisplay.blit(infotext2, infotext2Rect)  
