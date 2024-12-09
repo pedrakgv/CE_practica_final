@@ -29,10 +29,12 @@ number_track = 1
 nnCars = [] #List of neural network cars
 population = [] #Lista de individuos
 
-num_of_nnCars = 50 #Number of neural network cars
+num_of_nnCars = 10 #Number of neural network cars
 alive = num_of_nnCars #Number of not collided (alive) cars
 collidedCars = [] #List containing collided cars   
 selected = 0
+
+line_coords = {"x_range": (74, 165), "y_range": (410, 434)}
 
 
 white_small_car = pygame.image.load('Images\Sprites\white_small.png')

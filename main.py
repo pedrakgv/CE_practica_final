@@ -20,6 +20,11 @@ class Coche:
     self.score = 0
     self.num_layers = len(sizes) #Number of nn layers
     self.sizes = sizes #List with number of neurons per layer
+    self.vueltas = 0 # Numero de vueltas
+    self.line_state = "before_line"  # Estado inicial: antes de la línea
+    self.previous_line_state = "before_line"  # Estado anterior
+    self.passed_halfway = False  # Indica si el coche ha pasado la mitad del circuito
+
     
     if np.size(genome) == 0:
         biases = np.random.randn(sum(sizes[1:]))
@@ -198,10 +203,36 @@ class Coche:
     if self.outp.item(3) > 0.5: #Turn left
         self.rotate(5) 
     return
+  
+#   def check_goal(self): # Rango meta eje x: 74-165 eje y: 418-424
+#     # Verificar si el coche está en la meta y aumentar el contador de vueltas
+#     # print(self.x, self.y)
+#     if 74 <= self.x <= 165 and 420 <= self.y <= 424:
+#         self.vueltas += 1
+#         print("META ALCANZADA") 
+#     return self.vueltas
 
+  def check_goal(self, line_coords, halfway_x):
+    """Metodo para verificar si un individuo ha llegado a la solucion, en este caso si un coche llega a la meta"""
+    x_min, x_max = line_coords["x_range"]  # Rango del eje X de la meta
+    y_min, y_max = line_coords["y_range"]  # Rango del eje Y de la meta
+
+    # Verificar si el coche ha pasado la mitad del circuito
+    if self.x > halfway_x and not self.passed_halfway:
+        self.passed_halfway = True
+        print("Coche ha pasado la mitad del circuito.")
+
+    # Verificar si el coche está dentro del rango de la meta (en ambos ejes) Y ha pasado la mitad del circuito
+    if self.passed_halfway and x_min <= self.x <= x_max and y_min <= self.y <= y_max:
+        self.vueltas += 1
+        print(f"Meta alcanzada, vueltas: {self.vueltas}")
+        self.passed_halfway = False  # Reiniciar la marca de haber pasado la mitad
+        return True
+
+    return False
 
 def redrawGameWindow(): #Called on very frame   
-
+    
     global alive  
     global frames
     global img
@@ -209,12 +240,15 @@ def redrawGameWindow(): #Called on very frame
     frames += 1
 
     gameD = gameDisplay.blit(bg, (0,0))  
-       
+    
+
     #NN cars
     for nncar in nnCars:
+        # line_coords = {"x_range": (74, 165), "y_range": (410, 434)}
+
         if not nncar.collided:
             nncar.update() #Update: Every car center coord, corners, directions, collision points and collision distances
-        
+            nncar.check_goal(line_coords, 800)
         if nncar.collision(): #Check which car collided
             nncar.collided = True #If collided then change collided attribute to true
             if nncar.yaReste == False:
@@ -230,9 +264,12 @@ def redrawGameWindow(): #Called on very frame
     #Same but for player
     if player:
         car.update()
+        car.check_goal(line_coords, 800)
+        # print(car.x, car.y)
         if car.collision():
             car.resetPosition()
             car.update()
+            car.check_goal(line_coords, 800)
         car.draw(gameDisplay)    
     if display_info:    
         displayTexts() 
@@ -283,21 +320,91 @@ while True:
 
             if event.key == ord ( "a" ): #Proceso automatico
                 print("Proceso automatico")
-
+                gen_contador = 0
+                generaciones = 10
+                ganador = None
                 #while True: # o si cumple una condicion de parada (ej: numero de ejecuciones)
+                while gen_contador < generaciones and ganador is None:
+                    print(f"Generación {gen_contador + 1}")
 
-                #Evaluacion
+                    for coche in nnCars:
+                        
+                        if coche.check_goal(line_coords, 800):
+                            # El coche alcanza la meta, encontrando la solucion
+                            ganador = coche
+                            print("FIN")
+                            break
+                    if ganador:
+                        break
 
-                    #Si solucion, terminar
+                    finalizado = 0
+                    while finalizado < num_of_nnCars:  # Esperar a que paren todos los coches de la generacion
+                        for coche in nnCars:
+                            if coche.collided or (coche.velocity == 0 and coche.acceleration == 0):
+                                finalizado += 1
 
-                #Seleccion
+                    # Selección basada en el score: elige los dos mejores
+                    sorted_nnCars = sorted(nnCars, key=lambda car: car.score, reverse=True)
+                    parent1 = sorted_nnCars[0]
+                    parent2 = sorted_nnCars[1]
+                    parent1_genome = population[nnCars.index(parent1)]
+                    parent2_genome = population[nnCars.index(parent2)]
+                        
+                    print(f"Seleccionados para cruce: {parent1} y {parent2} con puntuaciones {parent1.score} y {parent2.score}")
 
-                #Cruce
+                    # 3. **Cruce**
+                    child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)
 
-                #Mutacion
+                    # # 4. **Mutación**
+                    # child1_genome = mutate_genome(child1_genome)
+                    # child2_genome = mutate_genome(child2_genome)
 
-                #Remplazo
+                    # 5. **Reemplazo**
+                    # Limpiar población existente y añadir nueva generación
+                    nnCars.clear()
+                    population.clear()
 
+                    # Añadir los padres y los hijos
+                    population.append(parent1_genome)
+                    population.append(parent2_genome)
+                    population.append(child1_genome)
+                    population.append(child2_genome)
+                    nnCars.append(Coche(parent1_genome))
+                    nnCars.append(Coche(parent2_genome))
+                    nnCars.append(Coche(child1_genome))
+                    nnCars.append(Coche(child2_genome))
+
+                    # Rellenar la población con nuevos individuos aleatorios
+                    for _ in range(num_of_nnCars - 4):
+                        biases = np.random.randn(sum(sizes[1:]))
+                        weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
+                        genome = np.concatenate((biases, weights))
+                        population.append(genome)
+                        nnCars.append(Coche(genome))
+
+                    # Asignar imágenes para identificar padres e hijos
+                    nnCars[0].car_image = green_small_car  # Padre 1
+                    nnCars[1].car_image = green_small_car  # Padre 2
+                    nnCars[2].car_image = blue_small_car  # Hijo 1
+                    nnCars[3].car_image = blue_small_car  # Hijo 2
+
+                    if number_track != 1:
+                        for nncar in nnCars:
+                            nncar.x = 140
+                            nncar.y = 610
+
+                    if ganador:
+                        print(f"Proceso terminado. El ganador es {ganador}")
+                    else:
+                        print("Proceso terminado. No se encontró un ganador.")
+
+                    #Cruce
+
+                    #Mutacion
+
+                    #Remplazo
+                    
+                    gen_contador += 1
 
 
             if event.key == ord ( "l" ): #If that key is l
@@ -339,7 +446,7 @@ while True:
                     alive = num_of_nnCars
                     generation += 1
                     selected = 0
-                        
+                    
                     parent1_index = nnCars.index(selectedCars[0])
                     parent2_index = nnCars.index(selectedCars[1])
 
