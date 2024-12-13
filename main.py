@@ -7,7 +7,7 @@ import numpy as np
 from vars import *
 from coche import Coche
 from grid import generateRandomMap
-from cruces import uniformCrossOverBiases, uniformCrossOverWeights, uniformCrossOver
+from cruces import uniformCrossOverBiases, uniformCrossOverWeights, uniformCrossOver, combinedCrossOver, morphologicalCrossOver
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene
 from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
 from pantalla import displayTexts
@@ -142,6 +142,9 @@ class Coche:
     self.d5 = int(calculateDistance(self.center[0], self.center[1], self.c5[0], self.c5[1]))
     
   def update_car(self, genome):
+    """
+    Reconstruye bias y weights con el cromosoma (genome) completo
+    """
     self.biases = []
     idx = 0
     for y in self.sizes[1:]:
@@ -345,15 +348,19 @@ while True:
 
                     # Selección basada en el score: elige los dos mejores
                     sorted_nnCars = sorted(nnCars, key=lambda car: car.score, reverse=True)
-                    parent1 = sorted_nnCars[0]
-                    parent2 = sorted_nnCars[1]
-                    parent1_genome = population[nnCars.index(parent1)]
-                    parent2_genome = population[nnCars.index(parent2)]
+                    top2_parents = sorted_nnCars[:2]  # padres
+                    top2_parents_genomes = [population[nnCars.index(parent)] for parent in top2_parents]  # cromosomas de los padres
                         
-                    print(f"Seleccionados para cruce: {parent1} y {parent2} con puntuaciones {parent1.score} y {parent2.score}")
+                    print(f"Seleccionados para cruce: {top2_parents[0]} y {top2_parents[1]} con puntuaciones {top2_parents[0].score} y {top2_parents[1].score}")
 
                     # 3. **Cruce**
-                    child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)
+                    # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
+                    child1_genome, child2_genome = combinedCrossOver(top2_parents_genomes[0], top2_parents_genomes[1], alpha=0.3)  # cruce combinado
+
+                    # seleccionar 5 padres para cruce morfológico
+                    # top5_parents = sorted_nnCars[:5]
+                    # top5_parents_genomes = [population[nnCars.index(parent)] for parent in top5_parents]
+                    # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
 
                     # # 4. **Mutación**
                     # child1_genome = mutate_genome(child1_genome)
@@ -365,12 +372,12 @@ while True:
                     population.clear()
 
                     # Añadir los padres y los hijos
-                    population.append(parent1_genome)
-                    population.append(parent2_genome)
+                    population.extend(top2_parents_genomes)  # cruce morfológico: top5_parents_genomes
                     population.append(child1_genome)
                     population.append(child2_genome)
-                    nnCars.append(Coche(parent1_genome))
-                    nnCars.append(Coche(parent2_genome))
+
+                    for genome in top2_parents_genomes:  # cruce morfológico: top5_parents_genomes
+                        nnCars.append(Coche(genome))
                     nnCars.append(Coche(child1_genome))
                     nnCars.append(Coche(child2_genome))
 
@@ -382,11 +389,13 @@ while True:
                         population.append(genome)
                         nnCars.append(Coche(genome))
 
-                    # Asignar imágenes para identificar padres e hijos
-                    nnCars[0].car_image = green_small_car  # Padre 1
-                    nnCars[1].car_image = green_small_car  # Padre 2
-                    nnCars[2].car_image = blue_small_car  # Hijo 1
-                    nnCars[3].car_image = blue_small_car  # Hijo 2
+                    # Asignar imágenes para padres
+                    for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
+                        nnCars[i].car_image = green_small_car  # Imagen para los padres
+
+                    # Asignar imágenes para hijos
+                    for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
+                        nnCars[i].car_image = blue_small_car  # Imagen para los hijos
 
                     if number_track != 1:
                         for nncar in nnCars:
@@ -456,7 +465,8 @@ while True:
                     nnCars.clear() 
                     population.clear()
 
-                    child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)
+                    # child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)  # cruce uniforme
+                    child1_genome, child2_genome = combinedCrossOver(parent1_genome, parent2_genome, alpha=0.2)  # cruce combinado
 
                     #De momento se añade a la siguiente generacion tanto los padres como los hijos
                     population.append(parent1_genome)
