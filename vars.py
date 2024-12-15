@@ -4,6 +4,14 @@ import pygame
 
 pygame.init() #Initialize pygame
 
+#Hiperparametros algoritmo evolutivo
+generaciones = 10
+mutationRate = 90
+num_of_nnCars = 10 #Number of neural network cars
+seleccion_algoritmo = 0 #0: Ruleta, 1: Torneo
+cruce_algoritmo = 0 #0: Uniforme, 1: Combinado, 2: Morfologico
+
+
 #Colors
 white = (255,255,255)
 green = (0, 255, 0) 
@@ -14,8 +22,7 @@ Color_line = (255,0,0)
 
 ### Valores de inicializacion ###
 generation = 1
-mutationRate = 90
-FPS = 30
+FPS = 60
 selectedCars = []
 selected = 0
 lines = True #If true then lines of player are shown
@@ -28,8 +35,8 @@ number_track = 1
 
 nnCars = [] #List of neural network cars
 population = [] #Lista de individuos
+valores_fitness = [] #Lista de valores de fitness
 
-num_of_nnCars = 10 #Number of neural network cars
 alive = num_of_nnCars #Number of not collided (alive) cars
 collidedCars = [] #List containing collided cars   
 selected = 0

@@ -324,38 +324,58 @@ while True:
             if event.key == ord ( "a" ): #Proceso automatico
                 print("Proceso automatico")
                 gen_contador = 0
-                generaciones = 10
-                ganador = None
-                #while True: # o si cumple una condicion de parada (ej: numero de ejecuciones)
-                while gen_contador < generaciones and ganador is None:
-                    print(f"Generación {gen_contador + 1}")
+                solucion = None
 
-                    for coche in nnCars:
-                        
-                        if coche.check_goal(line_coords, 800):
-                            # El coche alcanza la meta, encontrando la solucion
-                            ganador = coche
-                            print("FIN")
-                            break
-                    if ganador:
+                while gen_contador < generaciones:
+                    print(f"Generación {gen_contador + 1}")
+                    
+                    # 1. **Evaluación**
+                    nnCars.clear()
+                    for ind in population:      # Crear decodificaciones de los individuos, en este caso coches
+                        nnCars.append(Coche(ind))
+
+                    if gen_contador > 0:
+                        # Asignar imágenes para padres
+                        for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
+                            nnCars[i].car_image = green_small_car  # Imagen para los padres
+
+                        # Asignar imágenes para hijos
+                        for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
+                            nnCars[i].car_image = blue_small_car  # Imagen para los hijos
+                    
+                    for _ in range(100):  # 1000 frames
+                        redrawGameWindow()
+                        clock.tick(FPS)
+
+                    # Fitness
+                    # for i in range(num_of_nnCars):
+                    #     valores_fitness[i], es_solucion = calcularFitness(nnCars[i])
+                                        # if coche.check_goal(line_coords, 800):
+                                        #         # El coche alcanza la meta, encontrando la solucion
+                    #     if es_solucion:
+                    #         solucion = nnCars[i]
+                    #         break
+
+                    #temporal
+                    valores_fitness = list(range(1, num_of_nnCars + 1))
+
+                    if solucion:
+                        print("Se ha encontrado una solución")
                         break
 
-                    finalizado = 0
-                    while finalizado < num_of_nnCars:  # Esperar a que paren todos los coches de la generacion
-                        for coche in nnCars:
-                            if coche.collided or (coche.velocity == 0 and coche.acceleration == 0):
-                                finalizado += 1
+                    # 2. **Selección**
 
                     # Selección basada en el score: elige los dos mejores
-                    sorted_nnCars = sorted(nnCars, key=lambda car: car.score, reverse=True)
-                    top2_parents = sorted_nnCars[:2]  # padres
-                    top2_parents_genomes = [population[nnCars.index(parent)] for parent in top2_parents]  # cromosomas de los padres
+                    top2_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)[:2]
+                    top2_parents = [population[i] for i in top2_indices]
+
+                    
                         
-                    print(f"Seleccionados para cruce: {top2_parents[0]} y {top2_parents[1]} con puntuaciones {top2_parents[0].score} y {top2_parents[1].score}")
+                    print(f"Seleccionados para cruce: {top2_indices[0]} y {top2_indices[1]} con puntuaciones {valores_fitness[top2_indices[0]]} y {valores_fitness[top2_indices[1]]}")
 
                     # 3. **Cruce**
                     # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
-                    child1_genome, child2_genome = combinedCrossOver(top2_parents_genomes[0], top2_parents_genomes[1], alpha=0.3)  # cruce combinado
+                    child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
 
                     # seleccionar 5 padres para cruce morfológico
                     # top5_parents = sorted_nnCars[:5]
@@ -368,18 +388,13 @@ while True:
 
                     # 5. **Reemplazo**
                     # Limpiar población existente y añadir nueva generación
-                    nnCars.clear()
                     population.clear()
 
                     # Añadir los padres y los hijos
-                    population.extend(top2_parents_genomes)  # cruce morfológico: top5_parents_genomes
+                    population.extend(top2_parents)  # cruce morfológico: top5_parents_genomes
                     population.append(child1_genome)
                     population.append(child2_genome)
 
-                    for genome in top2_parents_genomes:  # cruce morfológico: top5_parents_genomes
-                        nnCars.append(Coche(genome))
-                    nnCars.append(Coche(child1_genome))
-                    nnCars.append(Coche(child2_genome))
 
                     # Rellenar la población con nuevos individuos aleatorios
                     for _ in range(num_of_nnCars - 4):
@@ -387,33 +402,20 @@ while True:
                         weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
                         genome = np.concatenate((biases, weights))
                         population.append(genome)
-                        nnCars.append(Coche(genome))
 
-                    # Asignar imágenes para padres
-                    for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
-                        nnCars[i].car_image = green_small_car  # Imagen para los padres
-
-                    # Asignar imágenes para hijos
-                    for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
-                        nnCars[i].car_image = blue_small_car  # Imagen para los hijos
 
                     if number_track != 1:
                         for nncar in nnCars:
                             nncar.x = 140
                             nncar.y = 610
 
-                    if ganador:
-                        print(f"Proceso terminado. El ganador es {ganador}")
-                    else:
-                        print("Proceso terminado. No se encontró un ganador.")
-
-                    #Cruce
-
-                    #Mutacion
-
-                    #Remplazo
                     
                     gen_contador += 1
+
+                if solucion:
+                    print(f"Proceso terminado. El ganador es {solucion}")
+                else:
+                    print("Proceso terminado. No se encontró un ganador.")
 
 
             if event.key == ord ( "l" ): #If that key is l
