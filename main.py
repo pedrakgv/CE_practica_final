@@ -24,6 +24,7 @@ class Coche:
     self.line_state = "before_line"  # Estado inicial: antes de la línea
     self.previous_line_state = "before_line"  # Estado anterior
     self.passed_halfway = False  # Indica si el coche ha pasado la mitad del circuito
+    self.visited_cells = set()  # Celdas visitadas por el coche
 
     
     if np.size(genome) == 0:
@@ -53,8 +54,8 @@ class Coche:
     #Boolean used for toggling distance lines
     self.showlines = False
     #Initial location of the car
-    self.x = 120
-    self.y = 480
+    self.x = 140 #120
+    self.y = 610 #480
     self.center = self.x, self.y
     #Height and width of the car
     self.height = 35 #45
@@ -233,6 +234,12 @@ class Coche:
         return True
 
     return False
+  
+  def update_visited_cells(self):
+      self.visited_cells.add((int(self.x/146), int(self.y/146)))
+  
+  def calculate_fitness(self):
+      return len(self.visited_cells), False # Valor fitness y bool indicando si es solucion. De momento False ya que no se comprueba si es solucion
 
 def redrawGameWindow(): #Called on very frame   
     
@@ -252,6 +259,7 @@ def redrawGameWindow(): #Called on very frame
         if not nncar.collided:
             nncar.update() #Update: Every car center coord, corners, directions, collision points and collision distances
             nncar.check_goal(line_coords, 800)
+            nncar.update_visited_cells()
         if nncar.collision(): #Check which car collided
             nncar.collided = True #If collided then change collided attribute to true
             if nncar.yaReste == False:
@@ -282,6 +290,10 @@ def redrawGameWindow(): #Called on very frame
     #img += 1
 
 
+generateRandomMap(gameDisplay)
+bg = pygame.image.load('randomGeneratedTrackFront.png')
+bg4 = pygame.image.load('randomGeneratedTrackBack.png')
+
 car = Coche()
 auxcar = Coche()
 
@@ -307,352 +319,441 @@ for i in range(num_of_nnCars):
 
     population.append(genome)
     nnCars.append(Coche(genome))
-   
+
+print("Proceso automatico")
+gen_contador = 0
+solucion = None
+valores_fitness = [0] * num_of_nnCars
+
+while gen_contador < generaciones:
+    print(f"Generación {gen_contador + 1}")
+    
+    # 1. **Evaluación**
+    nnCars.clear()
+    for ind in population:      # Crear decodificaciones de los individuos, en este caso coches
+        nnCars.append(Coche(ind))
+
+    if gen_contador > 0:
+        # Asignar imágenes para padres
+        for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
+            nnCars[i].car_image = green_small_car  # Imagen para los padres
+
+        # Asignar imágenes para hijos
+        for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
+            nnCars[i].car_image = blue_small_car  # Imagen para los hijos
+    
+    for _ in range(600):  # Numero de ticks
+        for event in pygame.event.get(): #Check for events
+            if event.type == pygame.QUIT:
+                pygame.quit() #quits
+                quit()
+
+        redrawGameWindow()
+        clock.tick(FPS)
+
+    # Fitness
+    
+    for i in range(num_of_nnCars):
+        valores_fitness[i], es_solucion = nnCars[i].calculate_fitness()
+        if es_solucion:
+            solucion = nnCars[i]
+            break
+
+    if solucion:
+        print("Se ha encontrado una solución")
+        break
+
+    # 2. **Selección**
+
+    # Selección basada en el score: elige los dos mejores
+    top2_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)[:2]
+    top2_parents = [population[i] for i in top2_indices]
+
+    
+        
+    print(f"Seleccionados para cruce: {top2_indices[0]} y {top2_indices[1]} con puntuaciones {valores_fitness[top2_indices[0]]} y {valores_fitness[top2_indices[1]]}")
+
+    # 3. **Cruce**
+    # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
+    child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
+
+    # seleccionar 5 padres para cruce morfológico
+    # top5_parents = sorted_nnCars[:5]
+    # top5_parents_genomes = [population[nnCars.index(parent)] for parent in top5_parents]
+    # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
+
+    # # 4. **Mutación**
+    # child1_genome = mutate_genome(child1_genome)
+    # child2_genome = mutate_genome(child2_genome)
+
+    # 5. **Reemplazo**
+    # Limpiar población existente y añadir nueva generación
+    population.clear()
+
+    # Añadir los padres y los hijos
+    population.extend(top2_parents)  # cruce morfológico: top5_parents_genomes
+    population.append(child1_genome)
+    population.append(child2_genome)
 
 
+    # Rellenar la población con nuevos individuos aleatorios
+    for _ in range(num_of_nnCars - 4):
+        biases = np.random.randn(sum(sizes[1:]))
+        weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
+        genome = np.concatenate((biases, weights))
+        population.append(genome)
 
-while True:
-    #now1 = time.time()  
+    
+    gen_contador += 1
+
+if solucion:
+    print(f"Proceso terminado. El ganador es {solucion}")
+else:
+    print("Proceso terminado. No se encontró un ganador.")
+
+
+# while True:
+#     #now1 = time.time()  
   
-    for event in pygame.event.get(): #Check for events
-        if event.type == pygame.QUIT:
-            pygame.quit() #quits
-            quit()
+#     for event in pygame.event.get(): #Check for events
+#         if event.type == pygame.QUIT:
+#             pygame.quit() #quits
+#             quit()
             
-        if event.type == pygame.KEYDOWN: #If user uses the keyboard
+#         if event.type == pygame.KEYDOWN: #If user uses the keyboard
 
-            if event.key == ord ( "a" ): #Proceso automatico
-                print("Proceso automatico")
-                gen_contador = 0
-                solucion = None
+#             if event.key == ord ( "a" ): #Proceso automatico
+#                 print("Proceso automatico")
+#                 gen_contador = 0
+#                 solucion = None
 
-                while gen_contador < generaciones:
-                    print(f"Generación {gen_contador + 1}")
+#                 while gen_contador < generaciones:
+#                     print(f"Generación {gen_contador + 1}")
                     
-                    # 1. **Evaluación**
-                    nnCars.clear()
-                    for ind in population:      # Crear decodificaciones de los individuos, en este caso coches
-                        nnCars.append(Coche(ind))
+#                     # 1. **Evaluación**
+#                     nnCars.clear()
+#                     for ind in population:      # Crear decodificaciones de los individuos, en este caso coches
+#                         nnCars.append(Coche(ind))
 
-                    if gen_contador > 0:
-                        # Asignar imágenes para padres
-                        for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
-                            nnCars[i].car_image = green_small_car  # Imagen para los padres
+#                     if gen_contador > 0:
+#                         # Asignar imágenes para padres
+#                         for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
+#                             nnCars[i].car_image = green_small_car  # Imagen para los padres
 
-                        # Asignar imágenes para hijos
-                        for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
-                            nnCars[i].car_image = blue_small_car  # Imagen para los hijos
+#                         # Asignar imágenes para hijos
+#                         for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
+#                             nnCars[i].car_image = blue_small_car  # Imagen para los hijos
                     
-                    for _ in range(100):  # 1000 frames
-                        redrawGameWindow()
-                        clock.tick(FPS)
+#                     for _ in range(100):  # 1000 frames
+#                         redrawGameWindow()
+#                         clock.tick(FPS)
 
-                    # Fitness
-                    # for i in range(num_of_nnCars):
-                    #     valores_fitness[i], es_solucion = calcularFitness(nnCars[i])
-                                        # if coche.check_goal(line_coords, 800):
-                                        #         # El coche alcanza la meta, encontrando la solucion
-                    #     if es_solucion:
-                    #         solucion = nnCars[i]
-                    #         break
+#                     # Fitness
+#                     # for i in range(num_of_nnCars):
+#                     #     valores_fitness[i], es_solucion = calcularFitness(nnCars[i])
+#                                         # if coche.check_goal(line_coords, 800):
+#                                         #         # El coche alcanza la meta, encontrando la solucion
+#                     #     if es_solucion:
+#                     #         solucion = nnCars[i]
+#                     #         break
 
-                    #temporal
-                    valores_fitness = list(range(1, num_of_nnCars + 1))
+#                     #temporal
+#                     valores_fitness = list(range(1, num_of_nnCars + 1))
 
-                    if solucion:
-                        print("Se ha encontrado una solución")
-                        break
+#                     if solucion:
+#                         print("Se ha encontrado una solución")
+#                         break
 
-                    # 2. **Selección**
+#                     # 2. **Selección**
 
-                    # Selección basada en el score: elige los dos mejores
-                    top2_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)[:2]
-                    top2_parents = [population[i] for i in top2_indices]
+#                     # Selección basada en el score: elige los dos mejores
+#                     top2_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)[:2]
+#                     top2_parents = [population[i] for i in top2_indices]
 
                     
                         
-                    print(f"Seleccionados para cruce: {top2_indices[0]} y {top2_indices[1]} con puntuaciones {valores_fitness[top2_indices[0]]} y {valores_fitness[top2_indices[1]]}")
+#                     print(f"Seleccionados para cruce: {top2_indices[0]} y {top2_indices[1]} con puntuaciones {valores_fitness[top2_indices[0]]} y {valores_fitness[top2_indices[1]]}")
 
-                    # 3. **Cruce**
-                    # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
-                    child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
+#                     # 3. **Cruce**
+#                     # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
+#                     child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
 
-                    # seleccionar 5 padres para cruce morfológico
-                    # top5_parents = sorted_nnCars[:5]
-                    # top5_parents_genomes = [population[nnCars.index(parent)] for parent in top5_parents]
-                    # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
+#                     # seleccionar 5 padres para cruce morfológico
+#                     # top5_parents = sorted_nnCars[:5]
+#                     # top5_parents_genomes = [population[nnCars.index(parent)] for parent in top5_parents]
+#                     # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
 
-                    # # 4. **Mutación**
-                    # child1_genome = mutate_genome(child1_genome)
-                    # child2_genome = mutate_genome(child2_genome)
+#                     # # 4. **Mutación**
+#                     # child1_genome = mutate_genome(child1_genome)
+#                     # child2_genome = mutate_genome(child2_genome)
 
-                    # 5. **Reemplazo**
-                    # Limpiar población existente y añadir nueva generación
-                    population.clear()
+#                     # 5. **Reemplazo**
+#                     # Limpiar población existente y añadir nueva generación
+#                     population.clear()
 
-                    # Añadir los padres y los hijos
-                    population.extend(top2_parents)  # cruce morfológico: top5_parents_genomes
-                    population.append(child1_genome)
-                    population.append(child2_genome)
-
-
-                    # Rellenar la población con nuevos individuos aleatorios
-                    for _ in range(num_of_nnCars - 4):
-                        biases = np.random.randn(sum(sizes[1:]))
-                        weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
-                        genome = np.concatenate((biases, weights))
-                        population.append(genome)
+#                     # Añadir los padres y los hijos
+#                     population.extend(top2_parents)  # cruce morfológico: top5_parents_genomes
+#                     population.append(child1_genome)
+#                     population.append(child2_genome)
 
 
-                    if number_track != 1:
-                        for nncar in nnCars:
-                            nncar.x = 140
-                            nncar.y = 610
+#                     # Rellenar la población con nuevos individuos aleatorios
+#                     for _ in range(num_of_nnCars - 4):
+#                         biases = np.random.randn(sum(sizes[1:]))
+#                         weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
+#                         genome = np.concatenate((biases, weights))
+#                         population.append(genome)
+
+
+#                     if number_track != 1:
+#                         for nncar in nnCars:
+#                             nncar.x = 140
+#                             nncar.y = 610
 
                     
-                    gen_contador += 1
+#                     gen_contador += 1
 
-                if solucion:
-                    print(f"Proceso terminado. El ganador es {solucion}")
-                else:
-                    print("Proceso terminado. No se encontró un ganador.")
+#                 if solucion:
+#                     print(f"Proceso terminado. El ganador es {solucion}")
+#                 else:
+#                     print("Proceso terminado. No se encontró un ganador.")
 
 
-            if event.key == ord ( "l" ): #If that key is l
-                car.showLines()
-                lines = not lines
-            # if event.key == ord ( "c" ): #If that key is c
-            #     for nncar in nnCars:
-            #         if nncar.collided == True:
-            #             nnCars.remove(nncar)
-            #             if nncar.yaReste == False:
-            #                 alive -= 1
-            if event.key == ord ( "p" ): #If that key is a
-                player = not player
-            if event.key == ord ( "d" ): #If that key is d
-                display_info = not display_info
-            if event.key == ord ( "n" ): #If that key is n
-                number_track = 2
-                # print(number_track)
-                for nncar in nnCars:
-                    nncar.velocity = 0
-                    nncar.acceleration = 0
-                    nncar.x = 140
-                    nncar.y = 610
-                    nncar.angle = 180
-                    nncar.collided = False
-                generateRandomMap(gameDisplay)
-                bg = pygame.image.load('randomGeneratedTrackFront.png')
-                bg4 = pygame.image.load('randomGeneratedTrackBack.png')
+#             if event.key == ord ( "l" ): #If that key is l
+#                 car.showLines()
+#                 lines = not lines
+#             # if event.key == ord ( "c" ): #If that key is c
+#             #     for nncar in nnCars:
+#             #         if nncar.collided == True:
+#             #             nnCars.remove(nncar)
+#             #             if nncar.yaReste == False:
+#             #                 alive -= 1
+#             if event.key == ord ( "p" ): #If that key is a
+#                 player = not player
+#             if event.key == ord ( "d" ): #If that key is d
+#                 display_info = not display_info
+#             if event.key == ord ( "n" ): #If that key is n
+#                 number_track = 2
+#                 # print(number_track)
+#                 for nncar in nnCars:
+#                     nncar.velocity = 0
+#                     nncar.acceleration = 0
+#                     nncar.x = 140
+#                     nncar.y = 610
+#                     nncar.angle = 180
+#                     nncar.collided = False
+#                 generateRandomMap(gameDisplay)
+#                 bg = pygame.image.load('randomGeneratedTrackFront.png')
+#                 bg4 = pygame.image.load('randomGeneratedTrackBack.png')
 
-            #Selección Manual
-            if event.key == ord ( "b" ):       # B: Cruce con codificacion real
-                if (len(selectedCars) == 2):
-                    for nncar in nnCars:
-                        nncar.score = 0
+#             #Selección Manual
+#             if event.key == ord ( "b" ):       # B: Cruce con codificacion real
+#                 if (len(selectedCars) == 2):
+#                     for nncar in nnCars:
+#                         nncar.score = 0
                
-                    #print("Poblacion antes del cruce: ", len(nnCars), len(population))
+#                     #print("Poblacion antes del cruce: ", len(nnCars), len(population))
 
                     
-                    alive = num_of_nnCars
-                    generation += 1
-                    selected = 0
+#                     alive = num_of_nnCars
+#                     generation += 1
+#                     selected = 0
                     
-                    parent1_index = nnCars.index(selectedCars[0])
-                    parent2_index = nnCars.index(selectedCars[1])
+#                     parent1_index = nnCars.index(selectedCars[0])
+#                     parent2_index = nnCars.index(selectedCars[1])
 
-                    parent1_genome = population[parent1_index]
-                    parent2_genome = population[parent2_index]
+#                     parent1_genome = population[parent1_index]
+#                     parent2_genome = population[parent2_index]
 
-                    nnCars.clear() 
-                    population.clear()
+#                     nnCars.clear() 
+#                     population.clear()
 
-                    # child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)  # cruce uniforme
-                    child1_genome, child2_genome = combinedCrossOver(parent1_genome, parent2_genome, alpha=0.2)  # cruce combinado
+#                     # child1_genome, child2_genome = uniformCrossOver(parent1_genome, parent2_genome)  # cruce uniforme
+#                     child1_genome, child2_genome = combinedCrossOver(parent1_genome, parent2_genome, alpha=0.2)  # cruce combinado
 
-                    #De momento se añade a la siguiente generacion tanto los padres como los hijos
-                    population.append(parent1_genome)
-                    population.append(parent2_genome)
-                    nnCars.append(Coche(parent1_genome))
-                    nnCars.append(Coche(parent2_genome))
+#                     #De momento se añade a la siguiente generacion tanto los padres como los hijos
+#                     population.append(parent1_genome)
+#                     population.append(parent2_genome)
+#                     nnCars.append(Coche(parent1_genome))
+#                     nnCars.append(Coche(parent2_genome))
                     
-                    population.append(child1_genome)
-                    population.append(child2_genome)
-                    nnCars.append(Coche(child1_genome))
-                    nnCars.append(Coche(child2_genome))
+#                     population.append(child1_genome)
+#                     population.append(child2_genome)
+#                     nnCars.append(Coche(child1_genome))
+#                     nnCars.append(Coche(child2_genome))
                     
                     
-                    nnCars[0].car_image = green_small_car #Padre 1
-                    nnCars[1].car_image = green_small_car #Padre 2
-                    nnCars[2].car_image = blue_small_car #Hijo 1
-                    nnCars[3].car_image = blue_small_car #Hijo 2
+#                     nnCars[0].car_image = green_small_car #Padre 1
+#                     nnCars[1].car_image = green_small_car #Padre 2
+#                     nnCars[2].car_image = blue_small_car #Hijo 1
+#                     nnCars[3].car_image = blue_small_car #Hijo 2
                     
-                    #Mutacion (hay que cambiarla para que se haga antes de crear los coches)
-                    #Implementar la mutacion para individuos con codificacion real
+#                     #Mutacion (hay que cambiarla para que se haga antes de crear los coches)
+#                     #Implementar la mutacion para individuos con codificacion real
                     
 
                     
-                    for i in range(num_of_nnCars - 4):
-                        #Nuevo individuo con codificación real
-                        biases = np.random.randn(sum(sizes[1:]))
-                        weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
+#                     for i in range(num_of_nnCars - 4):
+#                         #Nuevo individuo con codificación real
+#                         biases = np.random.randn(sum(sizes[1:]))
+#                         weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
 
-                        genome = np.concatenate((biases, weights))
+#                         genome = np.concatenate((biases, weights))
 
-                        population.append(genome)
-                        nnCars.append(Coche())
+#                         population.append(genome)
+#                         nnCars.append(Coche())
 
 
-                    if number_track != 1:
-                        for nncar in nnCars:
-                            nncar.x = 140
-                            nncar.y = 610 
+#                     if number_track != 1:
+#                         for nncar in nnCars:
+#                             nncar.x = 140
+#                             nncar.y = 610 
                     
-                    selectedCars.clear()
+#                     selectedCars.clear()
 
-                    #print("Poblacion despues del cruce: ", len(nnCars), len(population))
+#                     #print("Poblacion despues del cruce: ", len(nnCars), len(population))
 
-            # Selección Manual
-            # if event.key == ord ( "k" ):       # B: Nueva generacion
-            #     if (len(selectedCars) == 2):
-            #         for nncar in nnCars:
-            #             nncar.score = 0
+#             # Selección Manual
+#             # if event.key == ord ( "k" ):       # B: Nueva generacion
+#             #     if (len(selectedCars) == 2):
+#             #         for nncar in nnCars:
+#             #             nncar.score = 0
                
-            #         alive = num_of_nnCars
-            #         generation += 1
-            #         selected = 0
-            #         nnCars.clear() 
+#             #         alive = num_of_nnCars
+#             #         generation += 1
+#             #         selected = 0
+#             #         nnCars.clear() 
                     
-            #         for i in range(num_of_nnCars):
-            #             nnCars.append(Coche())
+#             #         for i in range(num_of_nnCars):
+#             #             nnCars.append(Coche())
                         
-            #         for i in range(0,num_of_nnCars-2,2):
-            #             uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
-            #             uniformCrossOverBiases(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
+#             #         for i in range(0,num_of_nnCars-2,2):
+#             #             uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
+#             #             uniformCrossOverBiases(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
                     
-            #         nnCars[num_of_nnCars-2] = selectedCars[0]
-            #         nnCars[num_of_nnCars-1] = selectedCars[1]
+#             #         nnCars[num_of_nnCars-2] = selectedCars[0]
+#             #         nnCars[num_of_nnCars-1] = selectedCars[1]
                     
-            #         nnCars[num_of_nnCars-2].car_image = green_small_car
-            #         nnCars[num_of_nnCars-1].car_image = green_small_car
+#             #         nnCars[num_of_nnCars-2].car_image = green_small_car
+#             #         nnCars[num_of_nnCars-1].car_image = green_small_car
                     
-            #         nnCars[num_of_nnCars-2].resetPosition()
-            #         nnCars[num_of_nnCars-1].resetPosition()
+#             #         nnCars[num_of_nnCars-2].resetPosition()
+#             #         nnCars[num_of_nnCars-1].resetPosition()
                     
-            #         nnCars[num_of_nnCars-2].collided = False
-            #         nnCars[num_of_nnCars-1].collided = False
+#             #         nnCars[num_of_nnCars-2].collided = False
+#             #         nnCars[num_of_nnCars-1].collided = False
                                   
-            #         for i in range(num_of_nnCars-2):
-            #             for j in range(mutationRate):
-            #                 mutateOneWeightGene(nnCars[i], auxcar)
-            #                 mutateOneWeightGene(auxcar, nnCars[i])
-            #                 mutateOneBiasesGene(nnCars[i], auxcar)
-            #                 mutateOneBiasesGene(auxcar, nnCars[i])
-            #         if number_track != 1:
-            #             for nncar in nnCars:
-            #                 nncar.x = 140
-            #                 nncar.y = 610 
+#             #         for i in range(num_of_nnCars-2):
+#             #             for j in range(mutationRate):
+#             #                 mutateOneWeightGene(nnCars[i], auxcar)
+#             #                 mutateOneWeightGene(auxcar, nnCars[i])
+#             #                 mutateOneBiasesGene(nnCars[i], auxcar)
+#             #                 mutateOneBiasesGene(auxcar, nnCars[i])
+#             #         if number_track != 1:
+#             #             for nncar in nnCars:
+#             #                 nncar.x = 140
+#             #                 nncar.y = 610 
                       
-            #         selectedCars.clear()
+#             #         selectedCars.clear()
                     
             
 
 
-            if event.key == ord ( "m" ):        # M: Nueva generacion y nuevo circuito
-                if (len(selectedCars) == 2):
-                    for nncar in nnCars:
-                        nncar.score = 0
+#             if event.key == ord ( "m" ):        # M: Nueva generacion y nuevo circuito
+#                 if (len(selectedCars) == 2):
+#                     for nncar in nnCars:
+#                         nncar.score = 0
                    
-                    alive = num_of_nnCars
-                    generation += 1
-                    selected = 0
-                    nnCars.clear() 
+#                     alive = num_of_nnCars
+#                     generation += 1
+#                     selected = 0
+#                     nnCars.clear() 
                     
-                    for i in range(num_of_nnCars):
-                        nnCars.append(Coche())
+#                     for i in range(num_of_nnCars):
+#                         nnCars.append(Coche())
                         
-                    for i in range(0,num_of_nnCars-2,2):
-                        uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
-                        uniformCrossOverBiases(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
+#                     for i in range(0,num_of_nnCars-2,2):
+#                         uniformCrossOverWeights(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
+#                         uniformCrossOverBiases(selectedCars[0], selectedCars[1], nnCars[i], nnCars[i+1])
                     
-                    nnCars[num_of_nnCars-2] = selectedCars[0]
-                    nnCars[num_of_nnCars-1] = selectedCars[1]
+#                     nnCars[num_of_nnCars-2] = selectedCars[0]
+#                     nnCars[num_of_nnCars-1] = selectedCars[1]
                     
-                    nnCars[num_of_nnCars-2].car_image = green_small_car
-                    nnCars[num_of_nnCars-1].car_image = green_small_car
+#                     nnCars[num_of_nnCars-2].car_image = green_small_car
+#                     nnCars[num_of_nnCars-1].car_image = green_small_car
                     
-                    nnCars[num_of_nnCars-2].resetPosition()
-                    nnCars[num_of_nnCars-1].resetPosition()
+#                     nnCars[num_of_nnCars-2].resetPosition()
+#                     nnCars[num_of_nnCars-1].resetPosition()
                     
-                    nnCars[num_of_nnCars-2].collided = False
-                    nnCars[num_of_nnCars-1].collided = False
+#                     nnCars[num_of_nnCars-2].collided = False
+#                     nnCars[num_of_nnCars-1].collided = False
                                   
-                    for i in range(num_of_nnCars-2):
-                        for j in range(mutationRate):
-                            mutateOneWeightGene(nnCars[i], auxcar)
-                            mutateOneWeightGene(auxcar, nnCars[i])
-                            mutateOneBiasesGene(nnCars[i], auxcar)
-                            mutateOneBiasesGene(auxcar, nnCars[i])
+#                     for i in range(num_of_nnCars-2):
+#                         for j in range(mutationRate):
+#                             mutateOneWeightGene(nnCars[i], auxcar)
+#                             mutateOneWeightGene(auxcar, nnCars[i])
+#                             mutateOneBiasesGene(nnCars[i], auxcar)
+#                             mutateOneBiasesGene(auxcar, nnCars[i])
 
-                    for nncar in nnCars:
-                        nncar.x = 140
-                        nncar.y = 610 
+#                     for nncar in nnCars:
+#                         nncar.x = 140
+#                         nncar.y = 610 
                       
-                    selectedCars.clear()
+#                     selectedCars.clear()
                     
-                    number_track = 2
-                    # print(number_track)
-                    for nncar in nnCars:
-                        nncar.velocity = 0
-                        nncar.acceleration = 0
-                        nncar.x = 140
-                        nncar.y = 610
-                        nncar.angle = 180
-                        nncar.collided = False
-                    generateRandomMap(gameDisplay)
-                    bg = pygame.image.load('randomGeneratedTrackFront.png')
-                    bg4 = pygame.image.load('randomGeneratedTrackBack.png')
-            if event.key == ord ( "r" ):
-                generation = 1
-                alive = num_of_nnCars
-                nnCars.clear() 
-                selectedCars.clear()
-                for i in range(num_of_nnCars):
-                    nnCars.append(Coche())
-                for nncar in nnCars:
-                    if number_track == 1:
-                        nncar.x = 120
-                        nncar.y = 480
-                    elif number_track == 2:
-                        nncar.x = 100
-                        nncar.y = 300
-            if event.key in mutation_rates:
-                mutationRate = mutation_rates[event.key]
+#                     number_track = 2
+#                     # print(number_track)
+#                     for nncar in nnCars:
+#                         nncar.velocity = 0
+#                         nncar.acceleration = 0
+#                         nncar.x = 140
+#                         nncar.y = 610
+#                         nncar.angle = 180
+#                         nncar.collided = False
+#                     generateRandomMap(gameDisplay)
+#                     bg = pygame.image.load('randomGeneratedTrackFront.png')
+#                     bg4 = pygame.image.load('randomGeneratedTrackBack.png')
+#             if event.key == ord ( "r" ):
+#                 generation = 1
+#                 alive = num_of_nnCars
+#                 nnCars.clear() 
+#                 selectedCars.clear()
+#                 for i in range(num_of_nnCars):
+#                     nnCars.append(Coche())
+#                 for nncar in nnCars:
+#                     if number_track == 1:
+#                         nncar.x = 120
+#                         nncar.y = 480
+#                     elif number_track == 2:
+#                         nncar.x = 100
+#                         nncar.y = 300
+#             if event.key in mutation_rates:
+#                 mutationRate = mutation_rates[event.key]
 
         
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            #This returns a tuple:
-            #(leftclick, middleclick, rightclick)
-            #Each one is a boolean integer representing button up/down.
-            mouses = pygame.mouse.get_pressed()
-            if mouses[0]: # Click izquierdo
-                seleccion_manual_individuo()
+#         if event.type == pygame.MOUSEBUTTONDOWN:
+#             #This returns a tuple:
+#             #(leftclick, middleclick, rightclick)
+#             #Each one is a boolean integer representing button up/down.
+#             mouses = pygame.mouse.get_pressed()
+#             if mouses[0]: # Click izquierdo
+#                 seleccion_manual_individuo()
     
-            if mouses[2]:       # Click derecho
-                eliminacion_manual_individuo()
+#             if mouses[2]:       # Click derecho
+#                 eliminacion_manual_individuo()
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        car.rotate(-5)
-    if keys[pygame.K_RIGHT]:
-        car.rotate(5)
-    if keys[pygame.K_UP]:
-        car.set_accel(0.2)
-    else:
-        car.set_accel(0)
-    if keys[pygame.K_DOWN]:
-        car.set_accel(-0.2)
+#     keys = pygame.key.get_pressed()
+#     if keys[pygame.K_LEFT]:
+#         car.rotate(-5)
+#     if keys[pygame.K_RIGHT]:
+#         car.rotate(5)
+#     if keys[pygame.K_UP]:
+#         car.set_accel(0.2)
+#     else:
+#         car.set_accel(0)
+#     if keys[pygame.K_DOWN]:
+#         car.set_accel(-0.2)
       
-    redrawGameWindow()   
+#     redrawGameWindow()   
     
-    clock.tick(FPS)
+#     clock.tick(FPS)
