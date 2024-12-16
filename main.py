@@ -3,12 +3,14 @@
 import pygame
 import math
 import numpy as np
+import random
 
 from vars import *
+import vars
 from coche import Coche
 from grid import generateRandomMap
 from cruces import uniformCrossOverBiases, uniformCrossOverWeights, uniformCrossOver, combinedCrossOver, morphologicalCrossOver
-from mutaciones import mutateOneBiasesGene, mutateOneWeightGene
+from mutaciones import mutateOneBiasesGene, mutateOneWeightGene, mutate_genome
 from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
 from pantalla import displayTexts
 from acciones import move, rotation, calculateDistance, sigmoid
@@ -339,7 +341,7 @@ while gen_contador < generaciones:
             nnCars[i].car_image = green_small_car  # Imagen para los padres
 
         # Asignar imágenes para hijos
-        for i in range(len(top2_parents), len(top2_parents) + 2):  # cruce morfológico: top5_parents
+        for i in range(len(top2_parents), len(top2_parents) + len(new_offspring)):  # cruce morfológico: top5_parents
             nnCars[i].car_image = blue_small_car  # Imagen para los hijos
     
     for _ in range(600):  # Numero de ticks
@@ -376,6 +378,7 @@ while gen_contador < generaciones:
     # 3. **Cruce**
     # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
     child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
+    new_offspring = [child1_genome, child2_genome]
 
     # seleccionar 5 padres para cruce morfológico
     # top5_parents = sorted_nnCars[:5]
@@ -383,8 +386,10 @@ while gen_contador < generaciones:
     # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
 
     # # 4. **Mutación**
-    # child1_genome = mutate_genome(child1_genome)
-    # child2_genome = mutate_genome(child2_genome)
+    mutationRate = 0.2   
+    for i in range(len(new_offspring)):
+        if random.random() < mutationRate:
+            new_offspring[i] = mutate_genome(new_offspring[i]) 
 
     # 5. **Reemplazo**
     # Limpiar población existente y añadir nueva generación
@@ -405,6 +410,7 @@ while gen_contador < generaciones:
 
     
     gen_contador += 1
+    vars.generation +=1 
 
 if solucion:
     print(f"Proceso terminado. El ganador es {solucion}")

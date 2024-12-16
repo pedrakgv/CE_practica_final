@@ -1,12 +1,13 @@
 """Modulo para representar los textos en la interfaz grafica"""
 
 from vars import *
+import vars
 def displayTexts():  
     global gameDisplay
     infotextX = 100
     infotextY = 700
-    infotext1 = font.render('Gen ' + str(generation), True, white) 
-    infotext2 = font.render('Cars: ' + str(num_of_nnCars), True, white)
+    infotext1 = font.render('Gen ' + str(vars.generation), True, white) 
+    infotext2 = font.render('Cars: ' + str(vars.num_of_nnCars), True, white)
     infotext3 = font.render('Alive: ' + str(alive), True, white)
     infotext4 = font.render('Selected: ' + str(selected), True, white)
     if lines == True:

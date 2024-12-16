@@ -50,8 +50,6 @@ def combinedCrossOver(parent1, parent2, alpha=0.5):
         # Gen i para Hijo 2
         child2_value = min_value + max_value - child1_value
         child2.append(child2_value)
-    
-    print("Cruce combinado")
 
     return child1, child2
 

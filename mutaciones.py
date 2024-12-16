@@ -2,6 +2,11 @@
 
 import random
 
+def mutate_genome(genome, mutation_value=0.5):
+    mutation_index = random.randint(0, len(genome)-1)
+    genome[mutation_index] += mutation_value 
+    return genome
+
 def mutateOneWeightGene(parent1, child1):
     sizenn = len(child1.sizes)
     
