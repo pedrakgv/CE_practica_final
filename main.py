@@ -56,8 +56,8 @@ class Coche:
     #Boolean used for toggling distance lines
     self.showlines = False
     #Initial location of the car
-    self.x = 140 #120
-    self.y = 610 #480
+    self.x = 120
+    self.y = 480
     self.center = self.x, self.y
     #Height and width of the car
     self.height = 35 #45
@@ -291,10 +291,10 @@ def redrawGameWindow(): #Called on very frame
     #pygame.image.save(gameDisplay, "pygameVideo/screenshot" + str(img) + ".jpeg")
     #img += 1
 
-
-generateRandomMap(gameDisplay)
-bg = pygame.image.load('randomGeneratedTrackFront.png')
-bg4 = pygame.image.load('randomGeneratedTrackBack.png')
+if number_track != 1:
+    generateRandomMap(gameDisplay)
+    bg = pygame.image.load('randomGeneratedTrackFront.png')
+    bg4 = pygame.image.load('randomGeneratedTrackBack.png')
 
 car = Coche()
 auxcar = Coche()
@@ -335,6 +335,11 @@ while gen_contador < generaciones:
     for ind in population:      # Crear decodificaciones de los individuos, en este caso coches
         nnCars.append(Coche(ind))
 
+    if number_track != 1:
+        for nncar in nnCars:
+            nncar.x = 140
+            nncar.y = 610
+
     if gen_contador > 0:
         # Asignar imágenes para padres
         for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
@@ -344,7 +349,7 @@ while gen_contador < generaciones:
         for i in range(len(top2_parents), len(top2_parents) + len(new_offspring)):  # cruce morfológico: top5_parents
             nnCars[i].car_image = blue_small_car  # Imagen para los hijos
     
-    for _ in range(600):  # Numero de ticks
+    for _ in range(generation_ticks):  # Numero de ticks
         for event in pygame.event.get(): #Check for events
             if event.type == pygame.QUIT:
                 pygame.quit() #quits
