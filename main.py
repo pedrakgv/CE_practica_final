@@ -223,16 +223,18 @@ class Coche:
     x_min, x_max = line_coords["x_range"]  # Rango del eje X de la meta
     y_min, y_max = line_coords["y_range"]  # Rango del eje Y de la meta
 
+    self.vueltas = 0
+
     # Verificar si el coche ha pasado la mitad del circuito
     if self.x > halfway_x and not self.passed_halfway:
         self.passed_halfway = True
         #print("Coche ha pasado la mitad del circuito.")
 
     # Verificar si el coche está dentro del rango de la meta (en ambos ejes) Y ha pasado la mitad del circuito
-    if self.passed_halfway and x_min <= self.x <= x_max and y_min <= self.y <= y_max:
+    if self.passed_halfway and self.x <= x_max and self.y <= y_max:
         self.vueltas += 1
         print(f"Meta alcanzada, vueltas: {self.vueltas}")
-        self.passed_halfway = False  # Reiniciar la marca de haber pasado la mitad
+        # self.passed_halfway = False  # Reiniciar la marca de haber pasado la mitad
         return True
 
     return False
@@ -241,7 +243,10 @@ class Coche:
       self.visited_cells.add((int(self.x/146), int(self.y/146)))
   
   def calculate_fitness(self):
-      return len(self.visited_cells), False # Valor fitness y bool indicando si es solucion. De momento False ya que no se comprueba si es solucion
+    #   print(f"x: {self.x}, y: {self.y}")
+      reached_goal = self.check_goal(line_coords, 800) # se comprueba si ha llegado (True) a la meta
+    #   print(f"reached_goal: {reached_goal}")
+      return len(self.visited_cells), reached_goal # Valor fitness y bool indicando si es solucion. De momento False ya que no se comprueba si es solucion
 
 def redrawGameWindow(): #Called on very frame   
     
@@ -354,6 +359,8 @@ else:  # Cruce morfológico
     print("Cruce utilizado: Cruce morfológico")
 
 coef_ticks = 1
+generacion_primera_sol = None
+solucion_encontrada = False
 while gen_contador < generaciones:
     #print(f"Generación {gen_contador + 1}")
     
@@ -386,16 +393,20 @@ while gen_contador < generaciones:
         clock.tick(FPS)
 
     # Fitness
-    
     for i in range(num_of_nnCars):
         valores_fitness[i], es_solucion = nnCars[i].calculate_fitness()
-        if es_solucion:
-            solucion = nnCars[i]
-            break
-
-    if solucion:
-        print("Se ha encontrado una solución")
-        break
+        if es_solucion and not solucion_encontrada:  # si hay solución y es la primera vez que lo encuentra
+            solucion = nnCars[i].outp  # capa de salida de la red
+            print("Solución encontrada!")
+            print(f"Generaciones: {gen_contador}")
+            print(f"Solución: {solucion}")
+            print(f"Fitness: {valores_fitness[i]}")
+            generacion_primera_sol = gen_contador
+            solucion_encontrada = True
+            # break
+    # if es_solucion:  # si se ha encontrado solucion se sale de pygame
+    #     print("Se ha encontrado una solución")
+    #     break
 
     # 2. **Selección**
     porc_pop_parents = 0.3
@@ -447,10 +458,14 @@ while gen_contador < generaciones:
     vars.generation += 1 
     coef_ticks += 1
 
-if solucion:
-    print(f"Proceso terminado. El ganador es {solucion}")
-else:
-    print("Proceso terminado. No se encontró un ganador.")
+
+
+if generacion_primera_sol:
+    print(f"Primera solución encontrada en la generación {generacion_primera_sol}")
+# if es_solucion:
+#     print(f"Proceso terminado. El ganador es {solucion}")
+# else:
+#     print("Proceso terminado. No se encontró un ganador.")
 
 
 # while True:
