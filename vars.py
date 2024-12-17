@@ -5,12 +5,13 @@ import pygame
 pygame.init() #Initialize pygame
 
 #Hiperparametros algoritmo evolutivo
-generaciones = 10
+generaciones = 100
 mutationRate = 10
 num_of_nnCars = 50 #Number of neural network cars
-seleccion_algoritmo = 0 #0: Ruleta, 1: Torneo
-cruce_algoritmo = 0 #0: Uniforme, 1: Combinado, 2: Morfologico
-generation_ticks = 600 #Numero de ticks por generacion
+seleccion_algoritmo = 1 #0: Ruleta, 1: Torneo
+cruce_algoritmo = 1 #0: Uniforme, 1: Combinado, 2: Morfologico
+generation_ticks = 400 #Numero de ticks por generacion
+porc_pop_parents = 0.3  # porcentaje de la población que son padres
 
 
 #Colors

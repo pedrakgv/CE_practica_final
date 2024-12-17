@@ -3,7 +3,12 @@ import numpy as np
 
 """Modulo de operadores de cruce"""
 
-def uniformCrossOver(parent1, parent2):
+def uniformCrossOver(parents: list):
+    if len(parents) != 2:
+        raise ValueError
+    parent1= parents[0]
+    parent2 = parents[1]
+
     child1 = []
     child2 = []
 
@@ -15,15 +20,15 @@ def uniformCrossOver(parent1, parent2):
         else:
             child1.append(parent2[i])
             child2.append(parent1[i])
-    
+
     return child1, child2
 
-def combinedCrossOver(parent1, parent2, alpha=0.5):
+
+def combinedCrossOver(parents: list, alpha=0.5):
     """
     Cruce combinado (BLX-alpha)
     :param
-    - parent1: cromosoma Padre 1
-    - parent2: cromosoma Padre 2
+    - parents: lista de cadenas de genes de dos padres
     - alpha: valor que controla intervalo de cruce
 
     return: 
@@ -31,6 +36,8 @@ def combinedCrossOver(parent1, parent2, alpha=0.5):
     - child2: cromosoma Hijo2
     """
 
+    parent1= parents[0]
+    parent2 = parents[1]
 
     # incializamos los hijos
     child1 = []
@@ -83,7 +90,6 @@ def morphologicalCrossOver(parents: list):
 
     for i in range(colums):
         fi = matrixG[:,i]
-        print(fi)
         # cálculo de medida de diversidad
         gi = fi.max() - fi.min()
 

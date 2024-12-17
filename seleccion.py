@@ -1,10 +1,32 @@
 """Modulo de operadores de seleccion de individuos"""
 
 import pygame
+import random
 from vars import *
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
+
+def tournament_selection(population: list, valores_fitness:list, tournament_size=3):
+    """
+    :param
+    - population: población
+    - valores_fitness: lista de valores fitness
+    - tournament_size: tamaño del torneo.
+    :return
+    - individuo (genome) ganador.
+    - índice de population del ganador (para usarlo en el reemplazo)
+    """
+    # Seleccionar un conjunto aleatorio de competidores para el torneo
+    torneo_indices = random.sample(range(len(population)), tournament_size)
+
+    ganador_torneo = max(torneo_indices, key=lambda i: valores_fitness[i])
+    
+    return population[ganador_torneo], ganador_torneo
+
+
+
+# ---------------------------------------------------------------------------------------------------
 def seleccion_manual_individuo():
     """Seleccionar manualmente un individuo"""
     global selected

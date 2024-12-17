@@ -11,7 +11,7 @@ from coche import Coche
 from grid import generateRandomMap
 from cruces import uniformCrossOverBiases, uniformCrossOverWeights, uniformCrossOver, combinedCrossOver, morphologicalCrossOver
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene, mutate_genome
-from seleccion import seleccion_manual_individuo, eliminacion_manual_individuo
+from seleccion import tournament_selection
 from pantalla import displayTexts
 from acciones import move, rotation, calculateDistance, sigmoid
 
@@ -327,6 +327,28 @@ gen_contador = 0
 solucion = None
 valores_fitness = [0] * num_of_nnCars
 
+
+# ## Decidir el tipo de selección
+# if seleccion_algoritmo == 0:
+#     pass
+# elif cruce_algoritmo == 1:
+#     selection_function = tournament_selection
+
+
+## Decidir el tipo de cruce
+# 1. **Definir función de cruce al inicio**
+if cruce_algoritmo == 0:  # Cruce uniforme
+    crossover_function = uniformCrossOver
+    n_parents_required = 2
+elif cruce_algoritmo == 1:  # Cruce combinado
+    alpha = 0.6  # Parámetro adicional para el cruce combinado
+    crossover_function = lambda parents: combinedCrossOver(parents, alpha)
+    n_parents_required = 2
+else:  # Cruce morfológico
+    crossover_function = morphologicalCrossOver
+    n_parents_required = 3
+
+coef_ticks = 1
 while gen_contador < generaciones:
     print(f"Generación {gen_contador + 1}")
     
@@ -342,11 +364,11 @@ while gen_contador < generaciones:
 
     if gen_contador > 0:
         # Asignar imágenes para padres
-        for i in range(len(top2_parents)):  # cruce morfológico: top5_parents
+        for i in range(len(top_parents)):  # cruce morfológico: top5_parents
             nnCars[i].car_image = green_small_car  # Imagen para los padres
 
         # Asignar imágenes para hijos
-        for i in range(len(top2_parents), len(top2_parents) + len(new_offspring)):  # cruce morfológico: top5_parents
+        for i in range(len(top_parents), len(top_parents) + len(new_offspring)):  # cruce morfológico: top5_parents
             nnCars[i].car_image = blue_small_car  # Imagen para los hijos
     
     for _ in range(generation_ticks):  # Numero de ticks
@@ -356,7 +378,7 @@ while gen_contador < generaciones:
                 quit()
 
         redrawGameWindow()
-        clock.tick(FPS)
+        clock.tick(FPS+coef_ticks*10)
 
     # Fitness
     
@@ -371,24 +393,32 @@ while gen_contador < generaciones:
         break
 
     # 2. **Selección**
-
-    # Selección basada en el score: elige los dos mejores
-    top2_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)[:2]
-    top2_parents = [population[i] for i in top2_indices]
-
+    porc_pop_parents = 0.3
+    total_n_parents = int(len(population) * porc_pop_parents)  # número de padres total a generar
+    if total_n_parents % n_parents_required != 0:  # asegurar que el número de parents sea múltiplo de n_parents_required
+        total_n_parents = total_n_parents - total_n_parents % n_parents_required
     
+    top_parents = []
+    top_parents_index = []
+    for _ in range(total_n_parents):
+        winner, winner_index = tournament_selection(population, valores_fitness, tournament_size=3)
+        if winner_index not in top_parents_index:
+            top_parents.append(winner)
+            top_parents_index.append(winner_index)
+    print(f"Número de padres: {len(top_parents)}")
         
-    print(f"Seleccionados para cruce: {top2_indices[0]} y {top2_indices[1]} con puntuaciones {valores_fitness[top2_indices[0]]} y {valores_fitness[top2_indices[1]]}")
 
     # 3. **Cruce**
-    # child1_genome, child2_genome = uniformCrossOver(top2_parents_genomes[0], top2_parents_genomes[1]) # cruce uniforme
-    child1_genome, child2_genome = combinedCrossOver(top2_parents[0], top2_parents[1], alpha=0.3)  # cruce combinado
-    new_offspring = [child1_genome, child2_genome]
+    new_offspring = []
+    for i in range(0, len(top_parents), n_parents_required):
+        # Cruce entre pares de padres 
+        if i + n_parents_required < len(top_parents):  # para no salir del rango
+            parents = top_parents[i:i + n_parents_required]
+            child1_genome, child2_genome = crossover_function(parents)
+            new_offspring.append(child1_genome)
+            new_offspring.append(child2_genome)
+    print(f"Número de hijos: {len(new_offspring)}")
 
-    # seleccionar 5 padres para cruce morfológico
-    # top5_parents = sorted_nnCars[:5]
-    # top5_parents_genomes = [population[nnCars.index(parent)] for parent in top5_parents]
-    # child1_genome, child2_genome = morphologicalCrossOver(top5_parents_genomes)  # cruce morfológico
 
     # # 4. **Mutación**
     mutationRate = 0.2   
@@ -396,26 +426,23 @@ while gen_contador < generaciones:
         if random.random() < mutationRate:
             new_offspring[i] = mutate_genome(new_offspring[i]) 
 
-    # 5. **Reemplazo**
-    # Limpiar población existente y añadir nueva generación
-    population.clear()
+    # 5. **Reemplazo**: reemplazar los peores individuos de la poblacion por los hijos y ordenarlos (padres + hijos + resto)
+    sorted_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)  # índices ordenados
+    worst_indices = sorted_indices[-len(new_offspring):]  # indices de los peores individuos
 
-    # Añadir los padres y los hijos
-    population.extend(top2_parents)  # cruce morfológico: top5_parents_genomes
-    population.append(child1_genome)
-    population.append(child2_genome)
+    # cuando hay padres que son están en el conjunto de peores fitness
+    top_parents_index = [index for index in top_parents_index if index not in worst_indices]  # actualizamos indices de padres quitando los padres que estan en el conjunto worst_index
+    top_parents = [population[i] for i in top_parents_index]  # actualizamos top_parents
 
+    # población que no son ni padres no peores
+    rest_population_index = [ind for ind in sorted_indices if ind not in top_parents_index and ind not in worst_indices]
+    rest_population = [population[i] for i in rest_population_index]
 
-    # Rellenar la población con nuevos individuos aleatorios
-    for _ in range(num_of_nnCars - 4):
-        biases = np.random.randn(sum(sizes[1:]))
-        weights = np.random.randn(sum(y * x for x, y in zip(sizes[:-1], sizes[1:])))
-        genome = np.concatenate((biases, weights))
-        population.append(genome)
-
+    population = top_parents + new_offspring + rest_population
     
     gen_contador += 1
-    vars.generation +=1 
+    vars.generation += 1 
+    coef_ticks += 1
 
 if solucion:
     print(f"Proceso terminado. El ganador es {solucion}")
