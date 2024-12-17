@@ -23,6 +23,29 @@ def uniformCrossOver(parents: list):
 
     return child1, child2
 
+def plainCrossOver(parents: list):
+    if len(parents) != 2:
+        raise ValueError
+    parent1= parents[0]
+    parent2 = parents[1]
+
+    child1 = []
+    child2 = []
+
+    for i in range(len(parent1)):
+        # Definir el rango basado en los valores de los padres
+        min_value = min(parent1[i], parent2[i])
+        max_value = max(parent1[i], parent2[i])
+
+        # Generar valores aleatorios dentro del rango
+        random_value1 = random.uniform(min_value, max_value)
+        random_value2 = random.uniform(min_value, max_value)
+
+        child1.append(random_value1)
+        child2.append(random_value2)
+
+    return child1, child2
+
 
 def combinedCrossOver(parents: list, alpha=0.5):
     """

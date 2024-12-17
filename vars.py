@@ -6,12 +6,13 @@ pygame.init() #Initialize pygame
 
 #Hiperparametros algoritmo evolutivo
 generaciones = 100
-mutationRate = 10
+mutationRate = 0.1
 num_of_nnCars = 50 #Number of neural network cars
 seleccion_algoritmo = 1 #0: Ruleta, 1: Torneo
-cruce_algoritmo = 1 #0: Uniforme, 1: Combinado, 2: Morfologico
-generation_ticks = 400 #Numero de ticks por generacion
+cruce_algoritmo = 1 #0: Uniforme, 1: Plano, 2: Combinado, 3: Morfologico
+generation_ticks = 100 #Numero de ticks por generacion
 porc_pop_parents = 0.3  # porcentaje de la población que son padres
+alpha = 0.6  # Parámetro adicional para el cruce combinado
 
 
 #Colors
@@ -23,6 +24,8 @@ gray = pygame.Color('gray12')
 Color_line = (255,0,0)
 
 ### Valores de inicializacion ###
+car_acceleration = 0.2 #Aceleracion de los coches
+maxspeed = 10 #Velocidad maxima de los coches
 number_track = 1 #Mapa normal: 1, Aleatorio: 2
 generation = 2
 FPS = 5000000 #Se capa en un maximo
@@ -32,7 +35,7 @@ lines = True #If true then lines of player are shown
 player = True #If true then player is shown
 display_info = True #If true then display info is shown
 frames = 0
-maxspeed = 10 
+
 
 
 nnCars = [] #List of neural network cars

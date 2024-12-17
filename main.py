@@ -9,7 +9,7 @@ from vars import *
 import vars
 from coche import Coche
 from grid import generateRandomMap
-from cruces import uniformCrossOverBiases, uniformCrossOverWeights, uniformCrossOver, combinedCrossOver, morphologicalCrossOver
+from cruces import uniformCrossOver, plainCrossOver, combinedCrossOver, morphologicalCrossOver
 from mutaciones import mutateOneBiasesGene, mutateOneWeightGene, mutate_genome
 from seleccion import tournament_selection
 from pantalla import displayTexts
@@ -199,11 +199,11 @@ class Coche:
       
   def takeAction(self): 
     if self.outp.item(0) > 0.5: #Accelerate
-        self.set_accel(0.2)
+        self.set_accel(car_acceleration)
     else:
         self.set_accel(0)      
     if self.outp.item(1) > 0.5: #Brake
-        self.set_accel(-0.2)     
+        self.set_accel(-car_acceleration)     
     if self.outp.item(2) > 0.5: #Turn right
         self.rotate(-5)    
     if self.outp.item(3) > 0.5: #Turn left
@@ -226,7 +226,7 @@ class Coche:
     # Verificar si el coche ha pasado la mitad del circuito
     if self.x > halfway_x and not self.passed_halfway:
         self.passed_halfway = True
-        print("Coche ha pasado la mitad del circuito.")
+        #print("Coche ha pasado la mitad del circuito.")
 
     # Verificar si el coche está dentro del rango de la meta (en ambos ejes) Y ha pasado la mitad del circuito
     if self.passed_halfway and x_min <= self.x <= x_max and y_min <= self.y <= y_max:
@@ -322,7 +322,6 @@ for i in range(num_of_nnCars):
     population.append(genome)
     nnCars.append(Coche(genome))
 
-print("Proceso automatico")
 gen_contador = 0
 solucion = None
 valores_fitness = [0] * num_of_nnCars
@@ -340,17 +339,23 @@ valores_fitness = [0] * num_of_nnCars
 if cruce_algoritmo == 0:  # Cruce uniforme
     crossover_function = uniformCrossOver
     n_parents_required = 2
-elif cruce_algoritmo == 1:  # Cruce combinado
-    alpha = 0.6  # Parámetro adicional para el cruce combinado
+    print("Cruce utilizado: Cruce uniforme")
+elif cruce_algoritmo == 1:  # Cruce plano
+    crossover_function = plainCrossOver
+    n_parents_required = 2
+    print("Cruce utilizado: Cruce plano")
+elif cruce_algoritmo == 2:  # Cruce combinado
     crossover_function = lambda parents: combinedCrossOver(parents, alpha)
     n_parents_required = 2
+    print("Cruce utilizado: Cruce combinado")
 else:  # Cruce morfológico
     crossover_function = morphologicalCrossOver
     n_parents_required = 3
+    print("Cruce utilizado: Cruce morfológico")
 
 coef_ticks = 1
 while gen_contador < generaciones:
-    print(f"Generación {gen_contador + 1}")
+    #print(f"Generación {gen_contador + 1}")
     
     # 1. **Evaluación**
     nnCars.clear()
@@ -371,14 +376,14 @@ while gen_contador < generaciones:
         for i in range(len(top_parents), len(top_parents) + len(new_offspring)):  # cruce morfológico: top5_parents
             nnCars[i].car_image = blue_small_car  # Imagen para los hijos
     
-    for _ in range(generation_ticks):  # Numero de ticks
+    for _ in range(generation_ticks+coef_ticks*10):  # Numero de ticks
         for event in pygame.event.get(): #Check for events
             if event.type == pygame.QUIT:
                 pygame.quit() #quits
                 quit()
-
+        
         redrawGameWindow()
-        clock.tick(FPS+coef_ticks*10)
+        clock.tick(FPS)
 
     # Fitness
     
@@ -405,8 +410,7 @@ while gen_contador < generaciones:
         if winner_index not in top_parents_index:
             top_parents.append(winner)
             top_parents_index.append(winner_index)
-    print(f"Número de padres: {len(top_parents)}")
-        
+    #print(f"Número de padres: {len(top_parents)}")
 
     # 3. **Cruce**
     new_offspring = []
@@ -417,11 +421,10 @@ while gen_contador < generaciones:
             child1_genome, child2_genome = crossover_function(parents)
             new_offspring.append(child1_genome)
             new_offspring.append(child2_genome)
-    print(f"Número de hijos: {len(new_offspring)}")
+    #print(f"Número de hijos: {len(new_offspring)}")
 
 
     # # 4. **Mutación**
-    mutationRate = 0.2   
     for i in range(len(new_offspring)):
         if random.random() < mutationRate:
             new_offspring[i] = mutate_genome(new_offspring[i]) 
@@ -430,11 +433,11 @@ while gen_contador < generaciones:
     sorted_indices = sorted(range(len(valores_fitness)), key=lambda i: valores_fitness[i], reverse=True)  # índices ordenados
     worst_indices = sorted_indices[-len(new_offspring):]  # indices de los peores individuos
 
-    # cuando hay padres que son están en el conjunto de peores fitness
+    # cuando hay padres que están en el conjunto de peores fitness
     top_parents_index = [index for index in top_parents_index if index not in worst_indices]  # actualizamos indices de padres quitando los padres que estan en el conjunto worst_index
     top_parents = [population[i] for i in top_parents_index]  # actualizamos top_parents
 
-    # población que no son ni padres no peores
+    # población que no son ni padres ni peores
     rest_population_index = [ind for ind in sorted_indices if ind not in top_parents_index and ind not in worst_indices]
     rest_population = [population[i] for i in rest_population_index]
 
